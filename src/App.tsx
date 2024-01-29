@@ -1,10 +1,11 @@
 import React from "react";
+import { SelectionMenu } from "./components/SelectionMenu";
 
 const App = () => {
   return (
-    <h1 className="text-3xl font-bold underline">
-      Hello world!
-    </h1>
+    <div className="bg-background flex h-screen">
+      <SelectionMenu />
+    </div>
   );
 };
 

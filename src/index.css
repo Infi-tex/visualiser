@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .select-button {
+    @apply flex flex-shrink-0
+      mr-8 p-2 
+      border border-gray-50 rounded-[8px] 
+      w-[160px] h-[160px] 
+      items-end 
+      text-lg
+      text-white uppercase
+      hover:bg-infitex;
+  }
+  .error-message-box {
+    @apply flex flex-col items-center justify-center
+      w-[160px] h-[160px] 
+      text-lg
+      text-white uppercase
+      bg-red-500;
+  }
+}
+ 
