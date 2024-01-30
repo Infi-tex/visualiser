@@ -1,4 +1,6 @@
 import { FC, useState, useEffect } from "react";
+import { loadingIcon } from "../icons/loadingIcon";
+import { connect } from "../connectToSampler";
 
 export const SelectionMenu: FC = () => {
   // State for selected items
@@ -14,12 +16,11 @@ export const SelectionMenu: FC = () => {
     if (selectionError) {
       timer = setTimeout(() => {
         setSelectionError(null);
-      }, 2000); // Clear the error after 2 second
+      }, 6000); // Clear the error after 2 second
     }
     return () => clearTimeout(timer); // Clear the timer if the component unmounts
   }, [selectionError]);
 
-  // Handlers for selections
   const handleSensorSelection = (sensor: string) => {
     setSelectedSensor(sensor);
   };
@@ -33,32 +34,15 @@ export const SelectionMenu: FC = () => {
       setSelectionError("Please select all options");
       return;
     }
+
     setIsLoading(true);
+    connect(setSelectionError);
   };
 
   // Function to get button classes
   const getButtonClasses = (name: string, selectedName: string | null) => {
     return `select-button ${name === selectedName ? "bg-infitex" : ""}`;
   };
-
-  // Custom loading icon
-  // From https://heroicons.com/
-  const loadingIcon = (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth={1.5}
-      stroke="currentColor"
-      className="animate-spin w-6 h-6 infitex ml-4 mb-1"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-      />
-    </svg>
-  );
 
   return (
     <div className="m-16 flex flex-col flex-1">
