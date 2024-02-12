@@ -1,9 +1,8 @@
-export const connect = async (setError: Function) => {
-  // Web Serial API is only supported on latest versions of Chrome, Edge and Opera
-  // and is not supported on mobile browsers
+export const connect = async () => {
   if (!("serial" in navigator)) {
-    setError("Web Serial API not supported");
-    return;
+    throw new Error(
+      "Web Serial API not supported, please use a supported browser (Chrome, Edge, Opera) on a desktop device."
+    );
   }
 
   try {
@@ -11,13 +10,13 @@ export const connect = async (setError: Function) => {
     await port.open({ baudRate: 115200 });
     await port.setSignals({ dataTerminalReady: true });
     await port.setSignals({ requestToSend: false });
-    readFromSerialPort(port, setError);
+    readFromSerialPort(port);
   } catch (error) {
-    setError("Connection failed: " + error);
+    throw new Error("Error connecting to serial port: " + error);
   }
 };
 
-const readFromSerialPort = async (port: SerialPort, setError: Function) => {
+const readFromSerialPort = async (port: SerialPort) => {
   while (port.readable) {
     const reader = port.readable
       //   .pipeThrough(new TextDecoderStream())
@@ -33,9 +32,8 @@ const readFromSerialPort = async (port: SerialPort, setError: Function) => {
         // Do something with |value|...
         console.log(value);
       }
-    } catch (e) {
-      console.error(e);
-      setError("Error reading from serial port");
+    } catch (error) {
+      throw new Error("Error reading from serial port: " + error);
     } finally {
       reader.releaseLock();
     }

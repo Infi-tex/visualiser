@@ -1,42 +1,59 @@
-import { FC, useState, useEffect } from "react";
+import { FC, useState, useEffect, Fragment } from "react";
+import { useNavigate } from "react-router-dom";
 import { loadingIcon } from "../icons/loadingIcon";
 import { connect } from "../connectToSampler";
 
-export const SelectionMenu: FC = () => {
+const SelectionMenu: FC = () => {
   // State for selected items
   const [selectedSensor, setSelectedSensor] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] = useState<string | null>(
     null
   );
-  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Hook to nagiagate to /sampler page
+  const navigate = useNavigate();
+
+  // Define sensor to connection mapping
+  const sensorConnectionMap: { [key: string]: string[] } = {
+    Sampler: ["USB board"],
+    "Infi-sole": ["USB board", "Bluetooth", "Data-logger"],
+    ForcePad: ["USB board", "Bluetooth", "Data-logger"],
+    "Button strip": ["USB board"],
+  };
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (selectionError) {
+    if (error) {
       timer = setTimeout(() => {
-        setSelectionError(null);
-      }, 6000); // Clear the error after 2 second
+        setError(null);
+      }, 10000); // Clear the error after 2 second
     }
     return () => clearTimeout(timer); // Clear the timer if the component unmounts
-  }, [selectionError]);
+  }, [error]);
 
   const handleSensorSelection = (sensor: string) => {
     setSelectedSensor(sensor);
+    // Reset connection selection when sensor selection changes
+    setSelectedConnection(null);
   };
 
   const handleConnectionSelection = (connection: string) => {
     setSelectedConnection(connection);
   };
 
-  const handleConnect = () => {
-    if (!selectedSensor || !selectedConnection) {
-      setSelectionError("Please select all options");
-      return;
-    }
-
+  const handleConnect = async () => {
     setIsLoading(true);
-    connect(setSelectionError);
+    try {
+      const data = await connect(); // Assuming connect() now resolves with data
+      navigate("/sensor/sampler", { state: { data } }); // Pass data to /sampler page
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      }
+    }
+    setIsLoading(false);
   };
 
   // Function to get button classes
@@ -44,66 +61,76 @@ export const SelectionMenu: FC = () => {
     return `select-button ${name === selectedName ? "bg-infitex" : ""}`;
   };
 
+  // Get available connections based on selected sensor
+  const availableConnections = selectedSensor
+    ? sensorConnectionMap[selectedSensor] || []
+    : [];
+
   return (
     <div className="m-16 flex flex-col flex-1">
       {/* Sensors */}
       <div className="flex flex-col mb-16">
         <div className="text-infitex text-3xl mb-8">Select your sensor</div>
         <div className="flex flex-row">
-          {["Sampler", "Infi-sole", "Forcepad", "Button strip"].map(
-            (sensor) => (
-              <button
-                key={sensor}
-                className={getButtonClasses(sensor, selectedSensor)}
-                onClick={() => handleSensorSelection(sensor)}
-              >
-                {sensor}
-              </button>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Connections */}
-      <div className="flex flex-col mb-32">
-        <div className="text-infitex text-3xl mb-8">Select connection type</div>
-        <div className="flex flex-row">
-          {["USB board", "Data-logger", "Bluetooth"].map((connection) => (
+          {Object.keys(sensorConnectionMap).map((sensor) => (
             <button
-              key={connection}
-              className={getButtonClasses(connection, selectedConnection)}
-              onClick={() => handleConnectionSelection(connection)}
+              key={sensor}
+              className={getButtonClasses(sensor, selectedSensor)}
+              onClick={() => handleSensorSelection(sensor)}
             >
-              {connection}
+              {sensor}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Connect button */}
-      <div className="flex flex-col">
-        <div className="flex flex-row">
-          {(isLoading && (
-            <button
-              className="select-button w-[180px] h-[80px] bg-infitex"
-              disabled
-              onClick={handleConnect}
-            >
-              Connecting
-              {loadingIcon}
-            </button>
-          )) || (
-            <button className="select-button h-[80px]" onClick={handleConnect}>
-              Connect
-            </button>
-          )}
+      {/* Connections */}
+      {selectedSensor && availableConnections.length > 0 && (
+        <div className="flex flex-col mb-32">
+          <div className="text-infitex text-3xl mb-8">
+            Select connection type
+          </div>
+          <div className="flex flex-row">
+            {availableConnections.map((connection) => (
+              <button
+                key={connection}
+                className={getButtonClasses(connection, selectedConnection)}
+                onClick={() => handleConnectionSelection(connection)}
+              >
+                {connection}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Connect button */}
+      {selectedSensor && selectedConnection && (
+        <div className="flex flex-col">
+          <div className="flex flex-row">
+            <button
+              className={`select-button h-[80px] ${
+                isLoading ? "w-[180px] bg-infitex" : ""
+              }`}
+              onClick={!isLoading ? handleConnect : undefined} // Prevent function invocation when loading
+            >
+              {isLoading ? (
+                <Fragment>
+                  Connecting
+                  {loadingIcon}
+                </Fragment>
+              ) : (
+                "Connect"
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Selection error message box */}
-      {selectionError && (
-        <div className="text-infitex mt-8">{selectionError}</div>
-      )}
+      {error && <div className="text-infitex mt-8">{error}</div>}
     </div>
   );
 };
+
+export default SelectionMenu;
