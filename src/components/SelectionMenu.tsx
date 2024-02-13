@@ -1,5 +1,6 @@
 import { FC, useState, useEffect, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSerialData } from "../SerialDataContext";
 import { loadingIcon } from "../icons/loadingIcon";
 import { connect } from "../connectToSampler";
 
@@ -14,6 +15,9 @@ const SelectionMenu: FC = () => {
 
   // Hook to nagiagate to /sampler page
   const navigate = useNavigate();
+
+  // Serial Data context hook
+  const { updateSerialData } = useSerialData();
 
   // Define sensor to connection mapping
   const sensorConnectionMap: { [key: string]: string[] } = {
@@ -46,8 +50,8 @@ const SelectionMenu: FC = () => {
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-      const data = await connect(); // Assuming connect() now resolves with data
-      navigate("/sensor/sampler", { state: { data } }); // Pass data to /sampler page
+      await connect(updateSerialData);
+      navigate("/sensor/sampler"); // Pass data to /sampler page
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
